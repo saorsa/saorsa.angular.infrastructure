@@ -1,0 +1,27 @@
+{
+  "name": "saorsa.angular.infrastructure",
+  "version": "0.0.1",
+  "homepage": "https://github.com/saorsa/saorsa.angular.infrastructure",
+  "authors": [
+    "Andrey <andrey.dautev@saorsa.bg>"
+  ],
+  "description": "Twitter Bootstrap & AngularJS helpers",
+  "main": "./Saorsa.Utils/Utils.js",
+  "keywords": [
+    "AngularJS",
+    "Twitter"
+  ],
+  "dependencies": {
+    "angular": "latest",
+    "bootstrap": "latest"
+  },
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
