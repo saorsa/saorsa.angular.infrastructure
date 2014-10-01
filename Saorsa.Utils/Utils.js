@@ -134,12 +134,13 @@ Saorsa.Utils.ToUTCDateString = function (dateString) {
  * @param data A .NET preserve reference JSON.
  */
 Saorsa.Utils.GetReferencesMap = function (data) {
-    var result = {};
+    var result = [];
     function recurse(cur, prop) {
         if (cur && cur["$id"]) {
+			var id = cur["$id"];
             if (Saorsa.Utils.IsDebug)
-                console.log("Adding " + prop + "to flat reference list ");
-            result[cur["$id"]] = cur;
+                console.log("Adding " + prop +"(id: "+ id  + ") to flat reference list ");
+            result.push({ id : cur });
         }
         if (Array.isArray(cur)) {
             for (var i = 0, l = cur.length; i < l; i++) {
