@@ -8,6 +8,7 @@
     "karma-phantomjs-launcher": "latest",
     "jasmine": "latest",
     "karma": "latest",
+    "karma-junit-reporter": "latest",
     "grunt-karma": "latest",
     "karma-jasmine": "latest"
   }
