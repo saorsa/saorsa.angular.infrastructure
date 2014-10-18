@@ -1,6 +1,10 @@
 ﻿/** @namespace */
 Saorsa.Utils = {};
 /**
+ * Contains the current DOM element that will have messages prepended.
+ */
+Saorsa.Utils.CurrentMessageContainer = null;
+/**
 * Shows a loading screen
 * 
 */
@@ -47,13 +51,13 @@ Saorsa.Utils.toDate = function(object, fields) {
  * 
  * @param {BaseResponseViewMOodel} response a JSON object with fields
  */
-Saorsa.Utils.showMessages = function(response) {
+Saorsa.Utils.showMessages = function (response, containerElement) {
     if (response.success === false) {
-        Saorsa.Utils.showErrors(response.messages);
+        Saorsa.Utils.showErrors(response.messages, containerElement);
     } else if (response.success === true) {
-        Saorsa.Utils.showOkMessages(response.messages);
+        Saorsa.Utils.showOkMessages(response.messages, containerElement);
     } else {
-        Saorsa.Utils.showOkMessages(response);
+        Saorsa.Utils.showOkMessages(response, containerElement);
     }
 }
 /**
@@ -61,9 +65,9 @@ Saorsa.Utils.showMessages = function(response) {
  * 
  * @param {BaseResponseViewModel} messages a JSON object. If the messages are stored in an array, they should be in a ["$values"] field (.NET reference preserving)
  */
-Saorsa.Utils.showErrors = function(messages) {
-    Saorsa.Utils.clearAllMessages();
-    var container = Saorsa.Utils.CreateErrorContainer();
+Saorsa.Utils.showErrors = function (messages, containerElement) {
+    Saorsa.Utils.clearAllMessages(containerElement);
+    var container = Saorsa.Utils.CreateErrorContainer(containerElement);
     if (messages && Object.prototype.toString.call(messages["$values"]) === '[object Array]') {
         for (var i = 0; i < messages["$values"].length; i++) {
             container.append('<p class="text-warning">' + messages["$values"][i] + '</p>');
@@ -77,9 +81,9 @@ Saorsa.Utils.showErrors = function(messages) {
  * 
  * @param {BaseResponseViewModel} messages a JSON object. If the messages are stored in an array, they should be in a ["$values"] field (.NET reference preserving)
  */
-Saorsa.Utils.showOkMessages = function (messages) {
-    Saorsa.Utils.clearAllMessages();
-    var container = Saorsa.Utils.CreateMessageContainer();
+Saorsa.Utils.showOkMessages = function (messages, containerElement) {
+    Saorsa.Utils.clearAllMessages(containerElement);
+    var container = Saorsa.Utils.CreateMessageContainer(containerElement);
     if (messages && Object.prototype.toString.call(messages["$values"]) === '[object Array]') {
         for (var i = 0; i < messages["$values"].length; i++) {
             container.append('<p class="text-info">' + messages["$values"][i] + '</p>');
@@ -91,23 +95,29 @@ Saorsa.Utils.showOkMessages = function (messages) {
 /**
 * Clears all messages displayed on a page
 */
-Saorsa.Utils.clearAllMessages = function() {
-    $(".saorsa-message").remove();
+Saorsa.Utils.clearAllMessages = function (containerElement) {
+    if (!containerElement)
+        containerElement = "";
+    $(containerElement + " .saorsa-message").remove();
 }
 /**
 * Creates an error placeholder
 */
-Saorsa.Utils.CreateErrorContainer = function () {
+Saorsa.Utils.CreateErrorContainer = function (element) {
+    if (!element)
+        element = ".body-content";
     var container = $('<div class="saorsa-message bg-danger"></div>');
-    $(".body-content").prepend(container);
+    $(element).prepend(container);
     return container;
 }
 /**
 * Creates a message container
 */
-Saorsa.Utils.CreateMessageContainer = function () {
+Saorsa.Utils.CreateMessageContainer = function (element) {
+    if (!element)
+        element = ".body-content";
     var container = $('<div class="saorsa-message bg-info"></div>');
-    $(".body-content").prepend(container);
+    $(element).prepend(container);
     return container;
 }
 /**
