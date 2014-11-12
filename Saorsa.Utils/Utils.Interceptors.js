@@ -11,8 +11,10 @@
                                 return config;
                             },
                             'response': function(response) {
-                                if (response.data && response.data.messages) {
+                                if ((response.data && response.data.messages) || response.modelState) {
                                     Saorsa.Utils.showMessages(response.data, Saorsa.Utils.CurrentMessageContainer);
+                                    Saorsa.Utils.hideLoading();
+                                    return response;
                                 }
                                 if (response.config.url.startsWith('/api/')) {
                                     response.data = Saorsa.Utils.TransformReferencePreservedJson(response.data);
@@ -24,7 +26,10 @@
                                 Saorsa.Utils.hideLoading();
                                 return response;
                             },
-                            'responseError': function(response) {
+                            'responseError': function (response) {
+                                if (response.data && response.data.modelState) {
+                                    Saorsa.Utils.showMessages(response.data, Saorsa.Utils.CurrentMessageContainer);
+                                }
                                 Saorsa.Utils.hideLoading();
                                 if (response.status === 404 || response.status == 500) {
                                     return $q.reject(response);

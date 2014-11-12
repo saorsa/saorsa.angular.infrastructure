@@ -1,5 +1,6 @@
 ﻿/** @namespace */
 Saorsa.Utils = {};
+Saorsa.Utils.IsDebug = false;
 /**
  * Contains the current DOM element that will have messages prepended.
  */
@@ -49,10 +50,16 @@ Saorsa.Utils.toDate = function(object, fields) {
 /**
  * Visually shows messages from a success/failure/other JSON response object
  * 
- * @param {BaseResponseViewMOodel} response a JSON object with fields
+ * @param {BaseResponseViewModel} response a JSON object with fields
  */
 Saorsa.Utils.showMessages = function (response, containerElement) {
-    if (response.success === false) {
+    //Cover webapi validation error
+    if (response.modelState) {
+        Saorsa.Utils.showErrors(Saorsa.Utils.parseWebApiMessages(response.modelState), containerElement);
+        return;
+    }
+    //Cover the BaseResponseViewModel case
+    else if (response.success === false) {
         Saorsa.Utils.showErrors(response.messages, containerElement);
     } else if (response.success === true) {
         Saorsa.Utils.showOkMessages(response.messages, containerElement);
@@ -148,7 +155,7 @@ Saorsa.Utils.GetReferencesMap = function (data) {
     function recurse(cur, prop) {
         if (cur && cur["$id"]) {
 			var id = cur["$id"];
-            if (Saorsa.Utils.IsDebug)
+            if (Saorsa.Utils.UtilsDebug)
                 console.log("Adding " + prop +"(id: "+ id  + ") to flat reference list ");
             result[id] = cur;
         }
@@ -177,17 +184,17 @@ Saorsa.Utils.GetReferencesMap = function (data) {
 Saorsa.Utils.ReplaceReferences = function (data, referenceMap, maxDepth) {
     function recurse(cur, prop, references, currentDepth, max) {
         if (currentDepth >= max) {
-            if(Saorsa.Utils.IsDebug)
+            if(Saorsa.Utils.UtilsDebug)
                 console.log("Maximum reference replacement depth reached");
         } else {
-            if (Saorsa.Utils.IsDebug)
+            if (Saorsa.Utils.UtilsDebug)
                 console.log("Searching " + prop);
             currentDepth++;
             if (Array.isArray(cur)) {
                 //Search for referrences in the arrays
                 for (var i = 0, l = cur.length; i < l; i++) {
                     if (cur[i] && cur[i]["$ref"]) {
-                        if (Saorsa.Utils.IsDebug)
+                        if (Saorsa.Utils.UtilsDebug)
                             console.log("Replacing in array: " + (prop ? prop + "." + i : "" + i));
                         cur[i] = references[cur[i]["$ref"]];
                     }
@@ -198,7 +205,7 @@ Saorsa.Utils.ReplaceReferences = function (data, referenceMap, maxDepth) {
                 if (cur != null && typeof (cur) !== 'string') {
                     for (var p in cur) {
                         if (cur[p] && cur[p]["$ref"]) {
-                            if (Saorsa.Utils.IsDebug)
+                            if (Saorsa.Utils.UtilsDebug)
                                 console.log("Replacing in object" + (prop ? prop + "." + p : "" + p));
                             cur[p] = references[cur[p]["$ref"]];
                         }
@@ -217,10 +224,10 @@ Saorsa.Utils.ReplaceReferences = function (data, referenceMap, maxDepth) {
  * @returns  A .NET preserve reference JSON with reference values filled to a certain depth.
  */
 Saorsa.Utils.TransformReferencePreservedJson = function (data) {
-    if (Saorsa.Utils.IsDebug)
+    if (Saorsa.Utils.UtilsDebug)
         console.log("Getting flat refrence map");
     var referencesMap = Saorsa.Utils.GetReferencesMap(data);
-    if (Saorsa.Utils.IsDebug)
+    if (Saorsa.Utils.UtilsDebug)
         console.log("Replacing references 3 levels deep (object.values.sessions)");
     Saorsa.Utils.ReplaceReferences(data, referencesMap, 3);
     return data;
@@ -232,7 +239,7 @@ Saorsa.Utils.TransformReferencePreservedJson = function (data) {
  * @param id The reference id to search for
  * @returns The object value.
  */
-Saorsa.Utils.TraverseDocument = function (document, id) {
+Saorsa.Utils.TraverseDocument = function(document, id) {
     var k;
     if (document instanceof Object) {
         for (k in document) {
@@ -250,7 +257,50 @@ Saorsa.Utils.TraverseDocument = function (document, id) {
     } else {
         //Ignore
     };
-}
+};
+/**
+ * Creates a global unique identifier
+ * @returns A GUID string.
+ */
+Saorsa.Utils.Guid = function() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+        s4() + '-' + s4() + s4() + s4();
+};
+Saorsa.Utils.getGenderFromPid = function (pid) {
+    if (pid.length != 10)
+        throw new Error("The PID should be 10 characters at length");
+    //0 - male
+    //1 - female
+    return parseInt(pid[8]) % 2 == 0 ? 0 : 1;
+};
+Saorsa.Utils.determineNewbornFromPid = function (pid) {
+    if (!pid || pid.length < 2)
+        return false;
+    //0 - male
+    //1 - female
+    var today = new Date();
+    var currentYear = today.getFullYear() % 100;
+    return currentYear - parseInt(pid[0] + pid[1]) == 0;
+};
+
+Saorsa.Utils.parseWebApiMessages = function (modelState) {
+    var message = '<ul class="errorsList">';
+    for (var p in modelState) {
+        if (p && p !== "$id") {
+            var length = modelState[p].length;
+            for (var i=0; i<length; i++) {
+                message += "<li>" + modelState[p][i] + "</li>";
+            }
+        }
+    }
+    return message+"</ul>";
+};
 /**
  * Adds a "startsWith" optionto string
  */
@@ -260,3 +310,7 @@ if (typeof String.prototype.startsWith != 'function') {
         return this.indexOf(str) == 0;
     };
 }
+String.prototype.endsWith = function (suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
+
