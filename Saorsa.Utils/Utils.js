@@ -1,6 +1,7 @@
 ﻿/** @namespace */
 Saorsa.Utils = {};
 Saorsa.Utils.IsDebug = false;
+Saorsa.Utils.MessageType = "dialog";
 /**
  * Contains the current DOM element that will have messages prepended.
  */
@@ -25,7 +26,7 @@ Saorsa.Utils.hideLoading = function () {
  * @param {object} object a JSON object with fields
  * @param {array} fields an array of field names for the object
  */
-Saorsa.Utils.fieldsToDate = function(object, fields) {
+Saorsa.Utils.fieldsToDate = function (object, fields) {
     for (var i = 0; i < fields.length; i++) {
         if (object[fields[i]]) {
             object[fields[i]] = new Date(object[fields[i]]);
@@ -38,7 +39,7 @@ Saorsa.Utils.fieldsToDate = function(object, fields) {
  * @param {object} object a JSON object with fields
  * @param {array} fields an array of field names for the object
  */
-Saorsa.Utils.toDate = function(object, fields) {
+Saorsa.Utils.toDate = function (object, fields) {
     if (Object.prototype.toString.call(object) === '[object Array]') {
         for (var i = 0; i < object.length; i++) {
             Saorsa.Utils.fieldsToDate(object[i], fields);
@@ -58,7 +59,10 @@ Saorsa.Utils.showMessages = function (response, containerElement) {
         Saorsa.Utils.showErrors(Saorsa.Utils.parseWebApiMessages(response.modelState), containerElement);
         return;
     }
-    //Cover the BaseResponseViewModel case
+    if (response.messages && response.messages.length === 1 && response.messages[0] === "") {
+        return;
+    }
+        //Cover the BaseResponseViewModel case
     else if (response.success === false) {
         Saorsa.Utils.showErrors(response.messages, containerElement);
     } else if (response.success === true) {
@@ -82,6 +86,28 @@ Saorsa.Utils.showErrors = function (messages, containerElement) {
     } else {
         container.append('<p class="text-warning">' + messages + '</p>');
     }
+    switch (Saorsa.Utils.MessageType) {
+        //Strongly depends on jQuery UI!!!!
+        case "dialog":
+            container.dialog({
+                width: 'auto', // overcomes width:'auto' and maxWidth bug
+                maxWidth: 600,
+                height: 'auto',
+                modal: true,
+                fluid: true, //new option
+                resizable: false,
+                buttons: {
+                    Ok: function () {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+            break;
+            //inline
+        default:
+            break;
+    }
+
 }
 /**
  * Visually shows an(or multiple) success message from a JSON response object
@@ -89,6 +115,7 @@ Saorsa.Utils.showErrors = function (messages, containerElement) {
  * @param {BaseResponseViewModel} messages a JSON object. If the messages are stored in an array, they should be in a ["$values"] field (.NET reference preserving)
  */
 Saorsa.Utils.showOkMessages = function (messages, containerElement) {
+    
     Saorsa.Utils.clearAllMessages(containerElement);
     var container = Saorsa.Utils.CreateMessageContainer(containerElement);
     if (messages && Object.prototype.toString.call(messages["$values"]) === '[object Array]') {
@@ -98,6 +125,27 @@ Saorsa.Utils.showOkMessages = function (messages, containerElement) {
     } else {
         container.append('<p class="text-info">' + messages + '</p>');
     }
+    switch (Saorsa.Utils.MessageType) {
+        //Strongly depends on jQuery UI!!!!
+        case "dialog":
+            container.dialog({
+                width: 'auto', // overcomes width:'auto' and maxWidth bug
+                maxWidth: 600,
+                height: 'auto',
+                modal: true,
+                fluid: true, //new option
+                resizable: false,
+                buttons: {
+                    Ok: function () {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+            break;
+            //inline
+        default:
+            break;
+    }   
 }
 /**
 * Clears all messages displayed on a page
@@ -132,7 +180,7 @@ Saorsa.Utils.CreateMessageContainer = function (element) {
  * 
  * @param datestring a string with date.
  */
-Saorsa.Utils.ToLocalDateString = function(dateString) {
+Saorsa.Utils.ToLocalDateString = function (dateString) {
     var date = new Date(dateString);
     return new Date(date.getTime() + (date.getTimezoneOffset() * -60000));
 };
@@ -154,9 +202,9 @@ Saorsa.Utils.GetReferencesMap = function (data) {
     var result = new Object();
     function recurse(cur, prop) {
         if (cur && cur["$id"]) {
-			var id = cur["$id"];
+            var id = cur["$id"];
             if (Saorsa.Utils.UtilsDebug)
-                console.log("Adding " + prop +"(id: "+ id  + ") to flat reference list ");
+                console.log("Adding " + prop + "(id: " + id + ") to flat reference list ");
             result[id] = cur;
         }
         if (Array.isArray(cur)) {
@@ -164,9 +212,9 @@ Saorsa.Utils.GetReferencesMap = function (data) {
                 recurse(cur[i], prop ? prop + "." + i : "" + i);
             }
         } else {
-            if (cur != null && typeof(cur) !== 'string') {
+            if (cur != null && typeof (cur) !== 'string') {
                 for (var p in cur) {
-                        recurse(cur[p], prop ? prop + "." + p : p);
+                    recurse(cur[p], prop ? prop + "." + p : p);
                 }
             }
         }
@@ -184,7 +232,7 @@ Saorsa.Utils.GetReferencesMap = function (data) {
 Saorsa.Utils.ReplaceReferences = function (data, referenceMap, maxDepth) {
     function recurse(cur, prop, references, currentDepth, max) {
         if (currentDepth >= max) {
-            if(Saorsa.Utils.UtilsDebug)
+            if (Saorsa.Utils.UtilsDebug)
                 console.log("Maximum reference replacement depth reached");
         } else {
             if (Saorsa.Utils.UtilsDebug)
@@ -239,7 +287,7 @@ Saorsa.Utils.TransformReferencePreservedJson = function (data) {
  * @param id The reference id to search for
  * @returns The object value.
  */
-Saorsa.Utils.TraverseDocument = function(document, id) {
+Saorsa.Utils.TraverseDocument = function (document, id) {
     var k;
     if (document instanceof Object) {
         for (k in document) {
@@ -262,7 +310,7 @@ Saorsa.Utils.TraverseDocument = function(document, id) {
  * Creates a global unique identifier
  * @returns A GUID string.
  */
-Saorsa.Utils.Guid = function() {
+Saorsa.Utils.Guid = function () {
     function s4() {
         return Math.floor((1 + Math.random()) * 0x10000)
             .toString(16)
@@ -294,12 +342,12 @@ Saorsa.Utils.parseWebApiMessages = function (modelState) {
     for (var p in modelState) {
         if (p && p !== "$id") {
             var length = modelState[p].length;
-            for (var i=0; i<length; i++) {
+            for (var i = 0; i < length; i++) {
                 message += "<li>" + modelState[p][i] + "</li>";
             }
         }
     }
-    return message+"</ul>";
+    return message + "</ul>";
 };
 /**
  * Adds a "startsWith" optionto string

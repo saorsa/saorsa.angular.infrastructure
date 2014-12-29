@@ -31,10 +31,7 @@
                                     Saorsa.Utils.showMessages(response.data, Saorsa.Utils.CurrentMessageContainer);
                                 }
                                 Saorsa.Utils.hideLoading();
-                                if (response.status === 404 || response.status == 500) {
-                                    return $q.reject(response);
-                                }
-                                return response;
+                                return $q.reject(response);
                             }
                         };
                     }];
