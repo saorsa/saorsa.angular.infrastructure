@@ -11,7 +11,7 @@
                                 return config;
                             },
                             'response': function(response) {
-                                if ((response.data && response.data.messages) || response.modelState) {
+                                if ((response.data && response.data.messages && response.data.messages >0) || response.modelState) {
                                     Saorsa.Utils.showMessages(response.data, Saorsa.Utils.CurrentMessageContainer);
                                     Saorsa.Utils.hideLoading();
                                     return response;
